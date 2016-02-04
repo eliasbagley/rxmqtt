@@ -2,6 +2,8 @@
 
 An RxJava wrapper for MQTT
 
+Latest version: 0.0.1
+
 ## Usage
 
 Use the builder syntax to create a client
@@ -25,7 +27,8 @@ Subscribe to a topic to recieve an RxJava Observable to recieve updates from thi
 ```java
 client.topic("home/livingroom/temperatures")
       .subscribe(message -> {
-          System.out.println(String.format("Received message %s from topic %s", message.getMessage(), message.getTopic()));
+          System.out.println("Topic: " + message.getTopic());
+          System.out.println("Message: " + message.getMessage());
        });
 ```
 
