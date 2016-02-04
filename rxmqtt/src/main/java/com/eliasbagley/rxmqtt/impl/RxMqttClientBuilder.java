@@ -10,7 +10,8 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
 import static com.eliasbagley.rxmqtt.constants.Constants.*;
 
-//TODO implement message persistence for qos 1 and 2
+//TODO message persistence for qos 1 and 2
+//TODO add a buildAndConnect() method
 public class RxMqttClientBuilder {
     @NonNull private String clientId; //TODO Use a default based on the device identifier
     @NonNull private String brokerUrl;
@@ -142,12 +143,12 @@ public class RxMqttClientBuilder {
             return failed(validationErrors);
         }
 
-        if (!brokerUrl.startsWith(TCP) || !brokerUrl.startsWith(SSL)) {
-            validationErrors += String.format("Broker URL must start with either %s or %s\n", TCP, SSL);
+        if (!(brokerUrl.startsWith(TCP) || brokerUrl.startsWith(SSL))) {
+            validationErrors += String.format("Broker URL \"%s\" must start with either %s or %s\n", brokerUrl, TCP, SSL);
         }
 
         if (!brokerUrl.matches("(.+):(\\d)+")) { // This pattern matches something like hostname.com:9999
-            validationErrors += "Broker URL must be in the form tcp://hostname:port or ssl://hostname:port. Example: tcp://example.com:5555\n";
+            validationErrors += String.format("Broker URL \"%s\" must be in the form tcp://hostname:port or ssl://hostname:port. Example: tcp://example.com:5555\n", brokerUrl);
         }
 
         if (clientId == null) {
