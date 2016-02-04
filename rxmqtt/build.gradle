@@ -44,7 +44,7 @@ ext {
     libraryName = 'rxmqtt'
     artifact = 'rxmqtt'
 
-    libraryDescription = 'RX Wrapper for MQTT'
+    libraryDescription = 'RxJava Wrapper for MQTT'
 
     siteUrl = 'https://github.com/eliasbagley/rxmqtt'
     gitUrl = 'https://github.com/eliasbagley/rxmqtt.git'
@@ -140,9 +140,9 @@ properties.load(project.rootProject.file('credentials/bintray.properties').newDa
 
 bintray {
     // First try to read from local.properties
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apikey")
-    def gpgpassphrase = properties.getProperty("bintray.gpg.password")
+    user = properties.getProperty("BINTRAY_USERNAME")
+    key = properties.getProperty("BINTRAY_APIKEY")
+    def gpgpassphrase = properties.getProperty("BINTRAY_GPG_KEY")
 
     // If the properties aren't set in a properties file, load from environment (needed for CI)
     if (user == null) {
