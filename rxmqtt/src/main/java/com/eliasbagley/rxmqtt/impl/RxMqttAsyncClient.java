@@ -25,6 +25,7 @@ import rx.Observer;
 import rx.Subscriber;
 import rx.subjects.PublishSubject;
 
+//TODO wut does the "Context" String do?
 public class RxMqttAsyncClient extends RxMqttClient {
     private MqttAsyncClient                            client;
     private Hashtable<String, Pattern>                 patternHashtable;

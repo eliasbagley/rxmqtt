@@ -10,12 +10,13 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
 import static com.eliasbagley.rxmqtt.constants.Constants.*;
 
-//TODO message persistence for qos 1 and 2
+//TODO implement message persistence for qos 1 and 2
 public class RxMqttClientBuilder {
     @NonNull private String clientId; //TODO Use a default based on the device identifier
     @NonNull private String brokerUrl;
     @NonNull private String host;
-    @NonNull private String port = DEFAULT_PORT;
+    @NonNull private String port    = DEFAULT_PORT;
+    @NonNull private String uriType = TCP;
     @Nullable private Will   will;
     @Nullable private String username;
     @Nullable private String password;
@@ -70,6 +71,12 @@ public class RxMqttClientBuilder {
     }
 
     @NonNull
+    public RxMqttClientBuilder setUriType(@NonNull String uriType) {
+        this.uriType = uriType;
+        return this;
+    }
+
+    @NonNull
     public RxMqttClientBuilder setCredentials(@NonNull String username, @NonNull String password) {
         this.username = username;
         this.password = password;
@@ -101,7 +108,7 @@ public class RxMqttClientBuilder {
 
     @NonNull
     private String createBrokerUrl() {
-        return String.format("%s%s:%s", TCP, host, port);
+        return String.format("%s%s:%s", uriType, host, port);
     }
 
     private boolean hasWill() {
@@ -164,7 +171,7 @@ public class RxMqttClientBuilder {
     }
 
     private static class ValidationResult {
-        private boolean          isValid;
+        private           boolean          isValid;
         @Nullable private RuntimeException validationException;
 
         public ValidationResult(boolean isValid) {
