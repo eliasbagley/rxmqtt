@@ -29,7 +29,11 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+
     compile 'com.android.support:appcompat-v7:23.1.1'
+    compile 'com.google.code.gson:gson:2.5'
+    compile 'io.reactivex:rxjava:1.1.0'
+    compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.0.2'
 }
 
 ////////////////////////
@@ -38,9 +42,8 @@ dependencies {
 
 ext {
     bintrayRepo = 'maven'
-    bintrayName = 'eliasbagley'
 
-    publishedGroupId = 'com.eliasbagley.rxmqtt'
+    publishedGroupId = 'com.eliasbagley'
     libraryName = 'rxmqtt'
     artifact = 'rxmqtt'
 
@@ -158,7 +161,8 @@ bintray {
     configurations = ['archives']
     pkg {
         repo = bintrayRepo
-        name = bintrayName
+        name = libraryName
+        userOrg = user
         desc = libraryDescription
         websiteUrl = siteUrl
         vcsUrl = gitUrl
@@ -166,6 +170,7 @@ bintray {
         publish = true
         publicDownloadNumbers = true
         version {
+            name = version_name
             desc = libraryDescription
             gpg {
                 sign = false //Determines whether to GPG sign the files. The default is false
