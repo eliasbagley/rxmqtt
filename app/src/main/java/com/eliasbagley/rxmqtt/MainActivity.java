@@ -8,7 +8,10 @@ import android.widget.Toast;
 import com.eliasbagley.rxmqtt.impl.Message;
 import com.eliasbagley.rxmqtt.impl.RxMqttClient;
 import com.eliasbagley.rxmqtt.impl.RxMqttClientBuilder;
+import com.eliasbagley.rxmqtt.impl.RxMqttClientStatus;
 import com.eliasbagley.rxmqtt.impl.Will;
+
+import org.eclipse.paho.client.mqttv3.IMqttToken;
 
 import rx.functions.Action1;
 
@@ -32,19 +35,36 @@ public class MainActivity extends AppCompatActivity {
         client.disconnect();
     }
 
+
     private void setupClient() {
+        Toast.makeText(MainActivity.this, "Setting up MQTT client...", Toast.LENGTH_SHORT).show();
+
         client = new RxMqttClientBuilder()
                 .setClientId("my-client")
-                .setCleanSession(true)
-                .setKeepAliveInterval(1000)
                 .setHost("test.mosquitto.org")
-                .setPort("1883")
-                .setWill(new Will("my/topic", "I died!"))
                 .build();
 
-        client.connect();
+        client.connect()
+                .subscribe(new Action1<IMqttToken>() {
+                    @Override
+                    public void call(IMqttToken token) {
+                        Toast.makeText(MainActivity.this, token.toString(), Toast.LENGTH_SHORT).show();
 
-        client.topic("my/topic", 1)
+                    }
+                });
+
+        client.statusReport()
+                .subscribe(new Action1<RxMqttClientStatus>() {
+                    @Override
+                    public void call(RxMqttClientStatus status) {
+                        Toast.makeText(MainActivity.this, status.toString(), Toast.LENGTH_SHORT).show();
+
+                    }
+                });
+
+        client.subscribeTopic("my_topic", 1);
+
+        client.topic("my_topic", 1)
                 .subscribe(new Action1<Message>() {
                     @Override
                     public void call(Message message) {

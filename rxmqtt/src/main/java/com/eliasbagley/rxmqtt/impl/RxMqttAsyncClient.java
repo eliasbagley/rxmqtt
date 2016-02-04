@@ -266,6 +266,6 @@ public class RxMqttAsyncClient extends RxMqttClient {
 
     @Override
     public Observable<Message> topic(String topic, int qos) {
-        return null; //TODO
+        return subscribing(topic);
     }
 }
