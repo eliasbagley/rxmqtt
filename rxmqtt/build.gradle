@@ -41,7 +41,7 @@ ext {
     bintrayName = 'eliasbagley'
 
     publishedGroupId = 'com.eliasbagley.rxmqtt'
-    libraryName = 'rxmqqt'
+    libraryName = 'rxmqtt'
     artifact = 'rxmqtt'
 
     libraryDescription = 'RX Wrapper for MQTT'
@@ -155,8 +155,6 @@ bintray {
         gpgpassphrase = System.getenv('BINTRAY_GPG_PASSPHRASE')
     }
 
-
-
     configurations = ['archives']
     pkg {
         repo = bintrayRepo
@@ -170,9 +168,8 @@ bintray {
         version {
             desc = libraryDescription
             gpg {
-                sign = true //Determines whether to GPG sign the files. The default is false
+                sign = false //Determines whether to GPG sign the files. The default is false
                 passphrase = gpgpassphrase
-                //Optional. The passphrase for GPG signing'
             }
         }
     }
