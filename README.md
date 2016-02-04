@@ -2,7 +2,7 @@
 
 An [RxJava] wrapper for [MQTT]
 
-Latest version: 0.0.1
+Latest version: `0.0.1`
 
 ## Usage
 
