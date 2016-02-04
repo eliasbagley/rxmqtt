@@ -9,11 +9,7 @@ Use the builder syntax to create a client
 ```java
     RxMqttClient client = new RxMqttClientBuilder()
                 .setClientId("my-client")
-                .setCleanSession(true)
-                .setKeepAliveInterval(1000)
                 .setHost("test.mosquitto.org")
-                .setPort("1883")
-                .setWill(new Will("my/topic", "I died!"))
                 .build();
 ```
 
