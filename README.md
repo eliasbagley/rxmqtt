@@ -49,6 +49,7 @@ compile 'com.eliasbagley:rxmqtt:0.0.1'
 
 ## LICENSE
 
+```
 The MIT License
 
 Copyright (c) Elias Bagley
@@ -70,6 +71,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+```
 
 [RxJava]:https://github.com/Netflix/RxJava
 [MQTT]:http://git.eclipse.org/c/paho/org.eclipse.paho.mqtt.java.git/
