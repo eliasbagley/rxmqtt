@@ -27,6 +27,11 @@ public class Message {
         return message;
     }
 
+    @NonNull
+    public byte[] getMessageBytes() {
+        return getMessage().getBytes();
+    }
+
     //TODO use QoS enum
     public int getQos() {
         return qos;

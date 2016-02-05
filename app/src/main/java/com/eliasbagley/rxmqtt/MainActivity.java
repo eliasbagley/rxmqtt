@@ -1,12 +1,15 @@
 package com.eliasbagley.rxmqtt;
 
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 import android.widget.Toast;
 
 import com.eliasbagley.rxmqtt.enums.State;
 import com.eliasbagley.rxmqtt.impl.Message;
+import com.eliasbagley.rxmqtt.impl.PublishResponse;
 import com.eliasbagley.rxmqtt.impl.RxMqttClient;
 import com.eliasbagley.rxmqtt.impl.RxMqttClientBuilder;
 import com.eliasbagley.rxmqtt.impl.Status;
@@ -29,6 +32,21 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         setupClient();
+
+        FloatingActionButton fab = (FloatingActionButton)findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("Clicked floating action button");
+                client.publish("my_topic", "hello world from app!").subscribe(new Action1<PublishResponse>() {
+                    @Override
+                    public void call(PublishResponse publishResponse) {
+                        System.out.println("IN callback");
+                    }
+                });
+            }
+        });
+
     }
 
     @Override
@@ -61,14 +79,20 @@ public class MainActivity extends AppCompatActivity {
         //TODO must abstract away this CONNECTED filter and the client connection
         // TODO perhaps have this state filter inside of the client itself?
 
-        client.topic("my_topic")
+        client.onTopic("my_topic")
                 .subscribe(new Action1<Message>() {
                     @Override
                     public void call(Message message) {
                         System.out.println("Received message: " + message.toString());
-
                     }
                 });
+
+        client.publish("my_topic", "hello world from app! der pp").subscribe(new Action1<PublishResponse>() {
+            @Override
+            public void call(PublishResponse publishResponse) {
+                System.out.println("IN callback");
+            }
+        });
 
 //        client.status().filter(new Func1<Status, Boolean>() {
 //            @Override

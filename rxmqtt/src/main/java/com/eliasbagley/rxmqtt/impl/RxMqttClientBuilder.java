@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.eliasbagley.rxmqtt.utils.Strings;
+import com.google.gson.Gson;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
@@ -13,7 +14,6 @@ import java.util.UUID;
 import static com.eliasbagley.rxmqtt.constants.Constants.*;
 
 //TODO message persistence for qos 1 and 2
-//TODO add a buildAndConnect() method
 public class RxMqttClientBuilder {
     @NonNull private String clientId = UUID.randomUUID().toString(); // Default to a random string
     @NonNull private String brokerUrl;
@@ -23,13 +23,13 @@ public class RxMqttClientBuilder {
     @Nullable private Will   will;
     @Nullable private String username;
     @Nullable private String password;
+    @NonNull private Gson gson = new Gson();
 
     // Default connection params
-    private boolean cleanSession      = true;
-    private int     keepAliveInterval = DEFAULT_KEEPALIVE;
-    private int     timeout           = DEFAULT_TIMEOUT;
-
-    private boolean hasSetOwnClientId = false; // used to track if the user has set their own client id
+    private boolean cleanSession          = true;
+    private int     keepAliveInterval     = DEFAULT_KEEPALIVE;
+    private int     timeout               = DEFAULT_TIMEOUT;
+    private boolean userHasSetOwnClientId = false;
 
     //region builder methods
 
@@ -46,9 +46,15 @@ public class RxMqttClientBuilder {
     }
 
     @NonNull
+    public RxMqttClientBuilder setGson(@NonNull Gson gson) {
+        this.gson = gson;
+        return this;
+    }
+
+    @NonNull
     public RxMqttClientBuilder setClientId(@NonNull String clientId) {
         this.clientId = clientId;
-        this.hasSetOwnClientId = true;
+        this.userHasSetOwnClientId = true;
         return this;
     }
 
@@ -131,14 +137,13 @@ public class RxMqttClientBuilder {
 
         ValidationResult validationResult = isValid();
         if (validationResult.isValid) {
-            return new RxMqttClient(brokerUrl, clientId, null, createConnectOptions());
+            return new RxMqttClient(brokerUrl, clientId, null, createConnectOptions(), gson);
         } else {
             throw validationResult.getValidationException();
         }
     }
 
-    @CheckResult
-    @NonNull
+    @CheckResult @NonNull
     public RxMqttClient buildAndConnect() {
         RxMqttClient client = build();
         client.connect();
@@ -147,13 +152,13 @@ public class RxMqttClientBuilder {
 
     //region validation
 
-    @NonNull
+    @CheckResult @NonNull
     private ValidationResult isValid() {
         String validationErrors = "";
 
         if (brokerUrl == null) {
             validationErrors += "Broker URL cannot be null.\n";
-            return failed(validationErrors);
+            return failed(validationErrors); // return early to avoid NPE
         }
 
         if (!(brokerUrl.startsWith(TCP) || brokerUrl.startsWith(SSL))) {
@@ -172,7 +177,7 @@ public class RxMqttClientBuilder {
             validationErrors += "Username and password must either both be set, or both be unset.";
         }
 
-        if (cleanSession == false && hasSetOwnClientId == false) {
+        if (cleanSession == false && userHasSetOwnClientId == false) {
             validationErrors += "You must provide your own client id if you want a persistent session. Use setClientId()";
         }
 
@@ -183,7 +188,7 @@ public class RxMqttClientBuilder {
         }
     }
 
-    @NonNull
+    @CheckResult @NonNull
     private ValidationResult failed(String errors) {
         return new ValidationResult(false, new RuntimeException("Failed validating build():\n" + errors));
     }

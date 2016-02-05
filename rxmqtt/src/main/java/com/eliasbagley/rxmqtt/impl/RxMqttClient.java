@@ -3,10 +3,8 @@ package com.eliasbagley.rxmqtt.impl;
 
 import com.eliasbagley.rxmqtt.constants.QoS;
 import com.eliasbagley.rxmqtt.enums.State;
-import com.eliasbagley.rxmqtt.enums.RxMqttExceptionType;
-import com.eliasbagley.rxmqtt.exceptions.RxMqttException;
-
 import com.eliasbagley.rxmqtt.exceptions.RxMqttTokenException;
+import com.google.gson.Gson;
 
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -17,9 +15,11 @@ import org.eclipse.paho.client.mqttv3.MqttClientPersistence;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 import rx.Observable;
@@ -28,8 +28,13 @@ import rx.functions.Func1;
 import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
 
-import static com.eliasbagley.rxmqtt.enums.State.*;
-import static com.eliasbagley.rxmqtt.constants.QoS.*;
+import static com.eliasbagley.rxmqtt.constants.QoS.AT_LEAST_ONCE;
+import static com.eliasbagley.rxmqtt.enums.State.CONNECTED;
+import static com.eliasbagley.rxmqtt.enums.State.CONNECTING;
+import static com.eliasbagley.rxmqtt.enums.State.CONNECTION_FAILED;
+import static com.eliasbagley.rxmqtt.enums.State.CONNECTION_LOST;
+import static com.eliasbagley.rxmqtt.enums.State.DISCONNECTING;
+import static com.eliasbagley.rxmqtt.enums.State.INIT;
 
 //TODO wut does the "Context" String do?
 public class RxMqttClient {
@@ -40,9 +45,11 @@ public class RxMqttClient {
     private MqttAsyncClient client;
     private Map<String, Pattern>                 patternHashtable = new Hashtable<>();
     private Map<String, PublishSubject<Message>> subjectHashtable = new Hashtable<>();
+    private Gson gson;
 
-    public RxMqttClient(String brokerUrl, String clientId, MqttClientPersistence persistence, MqttConnectOptions connectOptions) {
+    public RxMqttClient(String brokerUrl, String clientId, MqttClientPersistence persistence, MqttConnectOptions connectOptions, Gson gson) {
         this.connectOptions = connectOptions;
+        this.gson = gson;
 
         try {
             updateState(INIT);
@@ -57,12 +64,14 @@ public class RxMqttClient {
         client.setCallback(new MqttCallback() {
             @Override
             public void connectionLost(Throwable cause) {
+                cause.printStackTrace();
                 updateState(CONNECTION_LOST);
             }
 
             @Override
             public void messageArrived(String topic, MqttMessage message) {
                 System.out.println(String.format("Message arrived on topic: %s", topic));
+
                 if (message.getPayload().length != 0) {
                     for (String key : patternHashtable.keySet()) {
                         if (patternHashtable.get(key).matcher(topic).matches()) {
@@ -72,6 +81,7 @@ public class RxMqttClient {
                 }
             }
 
+            //TODO use this to track publishing
             @Override
             public void deliveryComplete(IMqttDeliveryToken token) {
                 System.out.println("delivery complete");
@@ -79,31 +89,25 @@ public class RxMqttClient {
         });
     }
 
-//    private void connect(final Subscriber<? super IMqttToken> subscriber) {
-//        try {
-//            System.out.println("Connecting..");
-//            updateState(State.CONNECTING);
-//            client.connect(connectOptions, "Context", new IMqttActionListener() {
-//                @Override
-//                public void onSuccess(IMqttToken asyncActionToken) {
-//                    System.out.println("Connection success");
-//                    updateState(State.CONNECTED);
-//                    subscriber.onNext(asyncActionToken);
-//                    subscriber.onCompleted();
-//                }
-//
-//                @Override
-//                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-//                    System.out.println("Connection failed");
-//                    updateState(State.CONNECTION_FAILED);
-//                    subscriber.onError(new RxMqttTokenException(exception, asyncActionToken));
-//                }
-//            });
-//        } catch (MqttException ex) {
-//            updateState(State.CONNECTION_FAILED);
-//            subscriber.onError(ex);
-//        }
-//    }
+    // This version of connect tries to take into account the status so connect can't be called if already connected
+    //TODO test
+    public Observable<RxMqttClient> con() {
+        return status()
+                .filter(new Func1<Status, Boolean>() {
+                    @Override
+                    public Boolean call(Status status) {
+                        return !(status.isConnected() || status.isConnecting());
+                    }
+                })
+                .timeout(5, TimeUnit.SECONDS)
+                .take(1)
+                .flatMap(new Func1<Status, Observable<RxMqttClient>>() {
+                    @Override
+                    public Observable<RxMqttClient> call(Status status) {
+                        return connect();
+                    }
+                });
+    }
 
     public Observable<RxMqttClient> connect() {
         final PublishSubject<RxMqttClient> subject = PublishSubject.create();
@@ -134,35 +138,6 @@ public class RxMqttClient {
 
         return subject;
     }
-
-//    @Override
-//    public Observable<IMqttToken> connect() {
-//        return Observable.create(new Observable.OnSubscribe<IMqttToken>() {
-//            @Override
-//            public void call(final Subscriber<? super IMqttToken> subscriber) {
-//                if (client == null) {
-//                    updateState(State.CONNECTION_FAILED);
-//                    subscriber.onError(new RxMqttException(RxMqttExceptionType.CLIENT_NULL_ERROR));
-//                }
-//
-//                disconnect().subscribe(new Observer<IMqttToken>() {
-//                    @Override
-//                    public void onCompleted() {
-//                        connect(subscriber);
-//                    }
-//
-//                    @Override
-//                    public void onError(Throwable e) {
-//                        connect(subscriber);
-//                    }
-//
-//                    @Override
-//                    public void onNext(IMqttToken iMqttToken) {
-//                    }
-//                });
-//            }
-//        });
-//    }
 
     //TODO this method is ugly
     public Observable<IMqttToken> disconnect() {
@@ -197,47 +172,109 @@ public class RxMqttClient {
         });
     }
 
-    public Observable<IMqttToken> publish(final String topic, final byte[] msg) {
-        return publish(topic, msg, 1); /* default QoS of 1 */
+    /**
+     * Publish convenience method which uses gson to serialize an object as the body
+     *
+     * @param topic
+     * @param body Json object to be serialized
+     * @return
+     */
+
+    public Observable<PublishResponse> publish(final String topic, Object body) {
+        return publish(topic, gson.toJson(body));
     }
 
-    public Observable<IMqttToken> publish(final String topic, final byte[] msg, int qos) {
-        final MqttMessage message = new MqttMessage();
-        message.setQos(qos);
-        message.setPayload(msg);
+    /**
+     * Convenience method
+     *
+     * @param topic
+     * @param message
+     * @return
+     */
+    public Observable<PublishResponse> publish(final String topic, final String message) {
+        return publish(topic, message, AT_LEAST_ONCE, false);
+    }
 
-        return Observable.create(new Observable.OnSubscribe<IMqttToken>() {
-            @Override
-            public void call(final Subscriber<? super IMqttToken> subscriber) {
-                if (client == null) {
-                    subscriber.onError(new RxMqttException(RxMqttExceptionType.CLIENT_NULL_ERROR));
+    /**
+     * Publishes only when connected the message on the topic only when connected
+     *
+     * @param topic
+     * @param message
+     * @param qos AT_MOST_ONCE, AT_LEAST_ONCE, EXACTLY_ONCE
+     * @param retained whether or not the broker will retain the message to be delivered immediately to future subscribers
+     * @return
+     */
+
+    public Observable<PublishResponse> publish(final String topic, final String message, final QoS qos, final boolean retained) {
+        return status()
+                .filter(new Func1<Status, Boolean>() {
+                    @Override
+                    public Boolean call(Status status) {
+                        return status.isConnected();
+                    }
+                })
+                .take(1)
+                .flatMap(new Func1<Status, Observable<PublishResponse>>() {
+                    @Override
+                    public Observable<PublishResponse> call(Status status) {
+                        return publishHelper(topic, message, qos, retained);
+                    }
+                });
+    }
+
+    private Observable<PublishResponse> publishHelper(final String topic, final String message, final QoS qos, final boolean retained) {
+        final PublishSubject<PublishResponse> subject = PublishSubject.create();
+
+        MqttMessage m = new MqttMessage(message.getBytes());
+        m.setRetained(retained);
+        m.setQos(qos.getValue());
+
+        try {
+            //TODO verify if the onSuccess guarantees the delivery. This might have to be combined with the other callback
+            client.publish(topic, m, "Context", new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    subject.onNext(new PublishResponse(topic, message, qos, retained));
+                    subject.onCompleted();
                 }
 
-                try {
-                    client.publish(topic, message, "Context", new IMqttActionListener() {
-                        @Override
-                        public void onSuccess(IMqttToken asyncActionToken) {
-                            subscriber.onNext(asyncActionToken);
-                            subscriber.onCompleted();
-                        }
-
-                        @Override
-                        public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                            subscriber.onError(new RxMqttTokenException(exception, asyncActionToken));
-                        }
-                    });
-                } catch (MqttException ex) {
-                    subscriber.onError(ex);
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    exception.printStackTrace();
+                    subject.onError(exception);
                 }
-            }
-        });
+            });
+        } catch (MqttPersistenceException e) {
+            e.printStackTrace();
+            subject.onError(e);
+        } catch (MqttException e) {
+            e.printStackTrace();
+            subject.onError(e);
+        }
+
+        return subject;
     }
 
-    public Observable<Message> topic(final String topic) {
-        return topic(topic, AT_LEAST_ONCE);
+    /**
+     * Convenience method for subscribing to a topic with default QoS AT_LEAST_ONCE
+     *
+     * @param topic
+     * @return
+     */
+
+    public Observable<Message> onTopic(final String topic) {
+        return onTopic(topic, AT_LEAST_ONCE);
     }
 
-    public Observable<Message> topic(final String topic, final QoS qos) {
+    /**
+     * Returns an observable which subscribes to the topic with the given qos
+     *
+     * @param topic
+     * @param qos
+     * @return
+     */
+
+    public Observable<Message> onTopic(final String topic, final QoS qos) {
         return status()
                 .filter(new Func1<Status, Boolean>() {
                     @Override
@@ -249,68 +286,39 @@ public class RxMqttClient {
                 .flatMap(new Func1<Status, Observable<Message>>() {
                     @Override
                     public Observable<Message> call(Status status) {
-                        return subscribeTopic(topic, qos.getValue());
+                        return subscribeTopic(topic, qos);
                     }
                 });
     }
 
-    //TODO factor in the passed in qos
-    private Observable<Message> subscribeTopic(final String topic, final int qos) {
+    private Observable<Message> subscribeTopic(final String topic, final QoS qos) {
         System.out.println(String.format("Subscribing to topic: %s topic", topic));
-//        final PublishSubject<Message> subject = PublishSubject.create();
 
-        final Observable<Message> obs = subscribing(topic); //TODO factor qos into this
+        final Observable<Message> obs = subscribing(topic);
+
         try {
-            client.subscribe(topic, qos, "context", new IMqttActionListener() {
+            client.subscribe(topic, qos.getValue(), "context", new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
-                    System.out.println("Subscribed to topic successfully");
-//                    subject.onNext(asyncActionToken);
-//                    subject.onCompleted();
                 }
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    System.out.println("Failed subscribing to topic..");
                     exception.printStackTrace();
-//                    obs.onError(exception);
                 }
             });
         } catch (MqttException e) {
-//            obs.onError(e);
+            e.printStackTrace();
         }
 
-//        return subject;
         return obs;
-
-
-//        return Observable.create(new Observable.OnSubscribe<IMqttToken>() {
-//            @Override
-//            public void call(final Subscriber<? super IMqttToken> subscriber) {
-//                try {
-//                    client.subscribe(topic, qos, "Context", new IMqttActionListener() {
-//                        @Override
-//                        public void onSuccess(IMqttToken asyncActionToken) {
-//                            subscriber.onNext(asyncActionToken);
-//                            subscriber.onCompleted();
-//                        }
-//
-//                        @Override
-//                        public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-//                            subscriber.onError(new RxMqttTokenException(exception, asyncActionToken));
-//                        }
-//                    });
-//                } catch (MqttException ex) {
-//                    subscriber.onError(ex);
-//                }
-//            }
-//        });
     }
 
-    public Observable<Message> subscribing(String regularExpression) {
+    private Observable<Message> subscribing(String regularExpression) {
         return subscribing(Pattern.compile(regularExpression));
     }
 
+    // TODO these might need to be purged at some point...
     public synchronized Observable<Message> subscribing(final Pattern pattern) {
         if (patternHashtable.containsKey(pattern.pattern())) {
             return subjectHashtable.get(pattern.pattern());
@@ -353,6 +361,8 @@ public class RxMqttClient {
         // Initialize status if it hasn't been before
         if (status == null) {
             status = new Status(state);
+            statusSubject.onNext(status);
+            return;
         }
 
         // Update the status and push out an update if the state has changed
