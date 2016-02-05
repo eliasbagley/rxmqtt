@@ -17,7 +17,7 @@ Use the builder syntax to create a client and connect to the broker:
 Subscribe to a topic to recieve an RxJava Observable to recieve updates from this topic:
 
 ```java
-client.topic("home/livingroom/temperatures")
+client.onTopic("home/livingroom/temperatures")
       .subscribe(message -> {
           System.out.println("Topic: " + message.getTopic());
           System.out.println("Message: " + message.getMessage());
@@ -26,9 +26,24 @@ client.topic("home/livingroom/temperatures")
 
 To monitor the connection status:
 
-```
+```java
 client.status()
-        .subscribe(status -> System.out.println(status.isConnected()));
+      .subscribe(status -> System.out.println(status.isConnected()));
+```
+
+To publish a message on a topic:
+
+```java
+client.publish("home/livingroom/temperatures", "27 C");
+      .subscribe(response -> System.out.println("Delivered: " + response));
+```
+
+You can also publish an object, which gets serialized to JSON
+
+```java
+Temperature temp = new Temperature(27, CELCIUS);
+client.publish("home/livingroom/temperatures", temp);
+      .subscribe(response -> System.out.println("Delivered: " + response));
 ```
 
 Disconnect when done:
