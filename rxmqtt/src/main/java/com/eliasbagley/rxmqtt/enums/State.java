@@ -1,7 +1,7 @@
 package com.eliasbagley.rxmqtt.enums;
 
 public enum State {
-    INIT(0),
+    INITIALIZING(0),
     CONNECTING(1),
     CONNECTION_FAILED(2),
     CONNECTED(3),

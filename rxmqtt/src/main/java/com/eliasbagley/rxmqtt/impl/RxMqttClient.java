@@ -34,7 +34,7 @@ import static com.eliasbagley.rxmqtt.enums.State.CONNECTING;
 import static com.eliasbagley.rxmqtt.enums.State.CONNECTION_FAILED;
 import static com.eliasbagley.rxmqtt.enums.State.CONNECTION_LOST;
 import static com.eliasbagley.rxmqtt.enums.State.DISCONNECTING;
-import static com.eliasbagley.rxmqtt.enums.State.INIT;
+import static com.eliasbagley.rxmqtt.enums.State.INITIALIZING;
 
 //TODO wut does the "Context" String do?
 public class RxMqttClient {
@@ -52,7 +52,7 @@ public class RxMqttClient {
         this.gson = gson;
 
         try {
-            updateState(INIT);
+            updateState(INITIALIZING);
             client = new MqttAsyncClient(brokerUrl, clientId, persistence);
             createListener();
         } catch (MqttException ex) {

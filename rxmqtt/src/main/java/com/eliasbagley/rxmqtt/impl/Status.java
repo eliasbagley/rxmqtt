@@ -50,7 +50,7 @@ public class Status {
     }
 
     public boolean isInitializing() {
-        return state == INIT;
+        return state == INITIALIZING;
     }
 
     public boolean isConnectionFailed() {
