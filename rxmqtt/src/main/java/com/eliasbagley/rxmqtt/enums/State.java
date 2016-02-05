@@ -1,17 +1,17 @@
 package com.eliasbagley.rxmqtt.enums;
 
-public enum RxMqttClientState {
-    Init(0),
-    Connecting(1),
-    ConnectingFailed(2),
-    Connected(3),
-    ConnectionLost(4),
-    TryDisconnect(5),
-    Disconnected(6);
+public enum State {
+    INIT(0),
+    CONNECTING(1),
+    CONNECTION_FAILED(2),
+    CONNECTED(3),
+    CONNECTION_LOST(4),
+    DISCONNECTING(5),
+    DISCONNECTED(6);
 
     private int code;
 
-    RxMqttClientState(int code) {
+    State(int code) {
         this.code = code;
     }
 

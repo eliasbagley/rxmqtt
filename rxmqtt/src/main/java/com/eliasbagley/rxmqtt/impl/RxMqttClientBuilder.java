@@ -8,12 +8,14 @@ import com.eliasbagley.rxmqtt.utils.Strings;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
+import java.util.UUID;
+
 import static com.eliasbagley.rxmqtt.constants.Constants.*;
 
 //TODO message persistence for qos 1 and 2
 //TODO add a buildAndConnect() method
 public class RxMqttClientBuilder {
-    @NonNull private String clientId; //TODO Use a default based on the device identifier
+    @NonNull private String clientId = UUID.randomUUID().toString(); // Default to a random string
     @NonNull private String brokerUrl;
     @NonNull private String host;
     @NonNull private String port    = DEFAULT_PORT;
@@ -26,6 +28,8 @@ public class RxMqttClientBuilder {
     private boolean cleanSession      = true;
     private int     keepAliveInterval = DEFAULT_KEEPALIVE;
     private int     timeout           = DEFAULT_TIMEOUT;
+
+    private boolean hasSetOwnClientId = false; // used to track if the user has set their own client id
 
     //region builder methods
 
@@ -44,6 +48,7 @@ public class RxMqttClientBuilder {
     @NonNull
     public RxMqttClientBuilder setClientId(@NonNull String clientId) {
         this.clientId = clientId;
+        this.hasSetOwnClientId = true;
         return this;
     }
 
@@ -126,10 +131,18 @@ public class RxMqttClientBuilder {
 
         ValidationResult validationResult = isValid();
         if (validationResult.isValid) {
-            return new RxMqttAsyncClient(brokerUrl, clientId, null, createConnectOptions());
+            return new RxMqttClient(brokerUrl, clientId, null, createConnectOptions());
         } else {
             throw validationResult.getValidationException();
         }
+    }
+
+    @CheckResult
+    @NonNull
+    public RxMqttClient buildAndConnect() {
+        RxMqttClient client = build();
+        client.connect();
+        return client;
     }
 
     //region validation
@@ -157,6 +170,10 @@ public class RxMqttClientBuilder {
 
         if (Strings.isBlank(username) != Strings.isBlank(password)) {
             validationErrors += "Username and password must either both be set, or both be unset.";
+        }
+
+        if (cleanSession == false && hasSetOwnClientId == false) {
+            validationErrors += "You must provide your own client id if you want a persistent session. Use setClientId()";
         }
 
         if (validationErrors.isEmpty()) {

@@ -5,15 +5,17 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
+import com.eliasbagley.rxmqtt.enums.State;
 import com.eliasbagley.rxmqtt.impl.Message;
 import com.eliasbagley.rxmqtt.impl.RxMqttClient;
 import com.eliasbagley.rxmqtt.impl.RxMqttClientBuilder;
-import com.eliasbagley.rxmqtt.impl.RxMqttClientStatus;
-import com.eliasbagley.rxmqtt.impl.Will;
+import com.eliasbagley.rxmqtt.impl.Status;
 
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 
+import rx.Observable;
 import rx.functions.Action1;
+import rx.functions.Func1;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,42 +37,74 @@ public class MainActivity extends AppCompatActivity {
         client.disconnect();
     }
 
-
     private void setupClient() {
-        Toast.makeText(MainActivity.this, "Setting up MQTT client...", Toast.LENGTH_SHORT).show();
-
         client = new RxMqttClientBuilder()
-                .setClientId("my-client")
                 .setHost("test.mosquitto.org")
-                .build();
+                .buildAndConnect();
 
-        client.connect()
-                .subscribe(new Action1<IMqttToken>() {
-                    @Override
-                    public void call(IMqttToken token) {
-                        Toast.makeText(MainActivity.this, token.toString(), Toast.LENGTH_SHORT).show();
+//        client.connect();
+//                .flatMap(new Func1<RxMqttClient, Observable<IMqttToken>>() {
+//                    @Override
+//                    public Observable<IMqttToken> call(RxMqttClient rxMqttClient) {
+//                        System.out.println("Inside the flatmap");
+//                        return rxMqttClient.subscribeTopic("my_topic", 1);
+//                    }
+//                })
+//                .subscribe(new Action1<IMqttToken>() {
+//                    @Override
+//                    public void call(IMqttToken iMqttToken) {
+//                        System.out.println("Finished subscribe to topic..");
+//                    }
+//                });
 
-                    }
-                });
 
-        client.statusReport()
-                .subscribe(new Action1<RxMqttClientStatus>() {
-                    @Override
-                    public void call(RxMqttClientStatus status) {
-                        Toast.makeText(MainActivity.this, status.toString(), Toast.LENGTH_SHORT).show();
+        //TODO must abstract away this CONNECTED filter and the client connection
+        // TODO perhaps have this state filter inside of the client itself?
 
-                    }
-                });
-
-        client.subscribeTopic("my_topic", 1);
-
-        client.topic("my_topic", 1)
+        client.topic("my_topic")
                 .subscribe(new Action1<Message>() {
                     @Override
                     public void call(Message message) {
-                        Toast.makeText(MainActivity.this, message.toString(), Toast.LENGTH_LONG).show();
+                        System.out.println("Received message: " + message.toString());
+
                     }
                 });
+
+//        client.status().filter(new Func1<Status, Boolean>() {
+//            @Override
+//            public Boolean call(Status status) {
+//                return status.getState() == State.CONNECTED;
+//            }
+//        }).flatMap(new Func1<Status, Observable<Message>>() {
+//            @Override
+//            public Observable<Message> call(Status status) {
+//                System.out.println("Inside the flatmap");
+//                return client.subscribeTopic("my_topic", 1);
+//            }
+//        })
+//        .subscribe(new Action1<Message>() {
+//            @Override
+//            public void call(Message message) {
+//                System.out.println(String.format("Got message: %s", message.toString()));
+//            }
+//        });
+
+        client.status()
+                .subscribe(new Action1<Status>() {
+                    @Override
+                    public void call(Status status) {
+                        System.out.println(String.format("Status updated: %s", status.toString()));
+                    }
+                });
+
+//        client.topic("my_topic", 1)
+//                .subscribe(new Action1<Message>() {
+//                    @Override
+//                    public void call(Message message) {
+//                        System.out.println(String.format("Got message: %s", message.toString()));
+//                        Toast.makeText(MainActivity.this, message.toString(), Toast.LENGTH_LONG).show();
+//                    }
+//                });
 
 //        // TODO: I think a better API would be to subscribe to a complete/incomplete notification
 //        client.publish("room/derp/topic", myObject)

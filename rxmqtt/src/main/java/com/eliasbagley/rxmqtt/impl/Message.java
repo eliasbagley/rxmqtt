@@ -1,17 +1,20 @@
 package com.eliasbagley.rxmqtt.impl;
 
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 public class Message {
     @NonNull private String      topic;
-    @NonNull private MqttMessage rxMessage;
+    @NonNull private MqttMessage mqttMessage;
+    @NonNull private String message;
+    private int qos;
 
-    public Message(@NonNull String topic, @NonNull MqttMessage rxMessage) {
+    public Message(@NonNull String topic, @NonNull MqttMessage mqttMessage) {
         this.topic = topic;
-        this.rxMessage = rxMessage;
+        this.mqttMessage = mqttMessage;
+        this.message = new String(mqttMessage.getPayload());
+        this.qos = mqttMessage.getQos();
     }
 
     @NonNull
@@ -19,21 +22,18 @@ public class Message {
         return topic;
     }
 
-    @Nullable
+    @NonNull
     public String getMessage() {
-        if (rxMessage == null) {
-            return null;
-        }
-
-        return new String(rxMessage.getPayload());
+        return message;
     }
 
+    //TODO use QoS enum
     public int getQos() {
-        return rxMessage == null ? -1 : rxMessage.getQos();
+        return qos;
     }
 
     @Override
     public String toString() {
-        return String.format("topic: %s; msg: %s; qos: %d", getTopic(), getMessage(), getQos());
+        return String.format("topic: %s\n message: %s\n qos: %d", getTopic(), getMessage(), getQos());
     }
 }
