@@ -6,23 +6,15 @@ Latest version: `0.0.1`
 
 ## Usage
 
-Use the builder syntax to create a client
+Use the builder syntax to create a client and connect to the broker:
 
 ```java
     RxMqttClient client = new RxMqttClientBuilder()
-                .setClientId("my-client")
                 .setHost("test.mosquitto.org")
-                .build();
+                .buildAndConnect();
 ```
 
-Connect to the network
-
-
-```java
-client.connect();
-```
-
-Subscribe to a topic to recieve an RxJava Observable to recieve updates from this topic
+Subscribe to a topic to recieve an RxJava Observable to recieve updates from this topic:
 
 ```java
 client.topic("home/livingroom/temperatures")
@@ -32,8 +24,14 @@ client.topic("home/livingroom/temperatures")
        });
 ```
 
+To monitor the connection status:
 
-Disconnect when done
+```
+client.status()
+        .subscribe(status -> System.out.println(status.isConnected()));
+```
+
+Disconnect when done:
 
 ```java
 client.disconnect();
