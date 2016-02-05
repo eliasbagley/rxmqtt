@@ -1,8 +1,8 @@
 // Manifest version information!
 def versionMajor = 0
 def versionMinor = 0
-def versionPatch = 1
-def versionBuild = 1
+def versionPatch = 2
+def versionBuild = 2
 
 def version_code = versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
 def version_name = "${versionMajor}.${versionMinor}.${versionPatch}"
