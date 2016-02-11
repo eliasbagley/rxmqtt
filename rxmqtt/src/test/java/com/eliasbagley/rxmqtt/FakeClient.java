@@ -23,6 +23,8 @@ import rx.subjects.PublishSubject;
  * Created by eliasbagley on 2/11/16.
  */
 
+//TODO model support for wildcard topics
+//TODO model support for the keep alive interval
 public class FakeClient extends MqttAsyncClient {
     private boolean      connected;
     private MqttCallback callback;
@@ -44,6 +46,7 @@ public class FakeClient extends MqttAsyncClient {
         super(serverURI, clientId, persistence, pingSender);
     }
 
+    // Initialize with some defaults
     public FakeClient() throws MqttException {
         this("tcp://localhost:1883", "test-client-id");
     }
