@@ -3,7 +3,9 @@ package com.eliasbagley.rxmqtt;
 import com.eliasbagley.rxmqtt.constants.QoS;
 import com.google.gson.Gson;
 
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -23,7 +25,7 @@ import static com.eliasbagley.rxmqtt.constants.QoS.*;
 
 public class RxMqttClientTest {
 
-    MqttAsyncClient   fakeClient;
+    FakeClient   fakeClient;
     RecordingObserver o;
     RxMqttClient      rxclient;
 
@@ -37,17 +39,7 @@ public class RxMqttClientTest {
 
         o = new RecordingObserver();
         rxclient = new RxMqttClient(fakeClient, new MqttConnectOptions(), new Gson());
-
-//        client = mock(MqttAsyncClient.class);
-//
-//        doAnswer(new Answer() {
-//            @Override
-//            public Object answer(InvocationOnMock invocation) throws Throwable {
-//                MqttCallback callback = invocation.getArgumentAt(0, MqttCallback.class);
-//                callback.messageArrived(TOPIC_1, MESSAGE_1);
-//                return null;
-//            }
-//        }).when(client).setCallback(any(MqttCallback.class));
+        rxclient.connect();
     }
 
     //TODO add the recording observer

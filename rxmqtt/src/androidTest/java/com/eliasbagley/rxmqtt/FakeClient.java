@@ -13,6 +13,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 import org.eclipse.paho.client.mqttv3.MqttPingSender;
 import org.eclipse.paho.client.mqttv3.MqttSecurityException;
+import org.eclipse.paho.client.mqttv3.TimerPingSender;
 
 import java.util.Hashtable;
 import java.util.Map;
@@ -30,28 +31,22 @@ public class FakeClient extends MqttAsyncClient {
     private boolean      connected;
     private MqttCallback callback;
 
-    private String serverUri;
-    private String clientId;
-
     private Map<String, PublishSubject<Message>> subscriptions = new Hashtable<>();
 
     public FakeClient(String serverURI, String clientId) throws MqttException {
-        this(serverURI, clientId, null, null);
+        this(serverURI, clientId, null, new TimerPingSender());
     }
 
     public FakeClient(String serverURI, String clientId, MqttClientPersistence persistence) throws MqttException {
-        this(serverURI, clientId, null, null);
+        this(serverURI, clientId, null, new TimerPingSender());
     }
 
     public FakeClient(String serverURI, String clientId, MqttClientPersistence persistence, MqttPingSender pingSender) throws MqttException {
         super(serverURI, clientId, persistence, pingSender);
-
-        this.serverUri = serverURI;
-        this.clientId = clientId;
     }
 
     public FakeClient() throws MqttException {
-        this("test-server-uri", "test-client-id");
+        this("tcp://localhost:1883", "test-client-id");
     }
 
 
@@ -126,16 +121,6 @@ public class FakeClient extends MqttAsyncClient {
     @Override
     public boolean isConnected() {
         return connected;
-    }
-
-    @Override
-    public String getClientId() {
-        return clientId;
-    }
-
-    @Override
-    public String getServerURI() {
-        return serverUri;
     }
 
     @Override
