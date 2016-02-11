@@ -1,4 +1,4 @@
-package com.eliasbagley.rxmqtt.impl;
+package com.eliasbagley.rxmqtt;
 
 import android.support.annotation.NonNull;
 

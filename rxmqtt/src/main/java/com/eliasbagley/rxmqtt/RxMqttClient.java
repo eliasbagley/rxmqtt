@@ -1,8 +1,10 @@
-package com.eliasbagley.rxmqtt.impl;
+package com.eliasbagley.rxmqtt;
 
+
+import android.support.annotation.VisibleForTesting;
 
 import com.eliasbagley.rxmqtt.constants.QoS;
-import com.eliasbagley.rxmqtt.enums.State;
+import com.eliasbagley.rxmqtt.constants.State;
 import com.eliasbagley.rxmqtt.exceptions.RxMqttTokenException;
 import com.google.gson.Gson;
 
@@ -29,14 +31,16 @@ import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
 
 import static com.eliasbagley.rxmqtt.constants.QoS.AT_LEAST_ONCE;
-import static com.eliasbagley.rxmqtt.enums.State.CONNECTED;
-import static com.eliasbagley.rxmqtt.enums.State.CONNECTING;
-import static com.eliasbagley.rxmqtt.enums.State.CONNECTION_FAILED;
-import static com.eliasbagley.rxmqtt.enums.State.CONNECTION_LOST;
-import static com.eliasbagley.rxmqtt.enums.State.DISCONNECTING;
-import static com.eliasbagley.rxmqtt.enums.State.INITIALIZING;
+import static com.eliasbagley.rxmqtt.constants.State.CONNECTED;
+import static com.eliasbagley.rxmqtt.constants.State.CONNECTING;
+import static com.eliasbagley.rxmqtt.constants.State.CONNECTION_FAILED;
+import static com.eliasbagley.rxmqtt.constants.State.CONNECTION_LOST;
+import static com.eliasbagley.rxmqtt.constants.State.DISCONNECTED;
+import static com.eliasbagley.rxmqtt.constants.State.DISCONNECTING;
+import static com.eliasbagley.rxmqtt.constants.State.INITIALIZING;
 
 //TODO wut does the "Context" String do?
+//TODO add an initialized state?
 public class RxMqttClient {
     private MqttConnectOptions connectOptions;
     private Status             status;
@@ -46,6 +50,15 @@ public class RxMqttClient {
     private Map<String, Pattern>                 patternHashtable = new Hashtable<>();
     private Map<String, PublishSubject<Message>> subjectHashtable = new Hashtable<>();
     private Gson gson;
+
+    @VisibleForTesting
+    public RxMqttClient(MqttAsyncClient client, MqttConnectOptions connectOptions, Gson gson) {
+        updateState(INITIALIZING);
+        this.client = client;
+        this.connectOptions = connectOptions;
+        this.gson = gson;
+        createListener();
+    }
 
     public RxMqttClient(String brokerUrl, String clientId, MqttClientPersistence persistence, MqttConnectOptions connectOptions, Gson gson) {
         this.connectOptions = connectOptions;
@@ -139,37 +152,34 @@ public class RxMqttClient {
         return subject;
     }
 
-    //TODO this method is ugly
-    public Observable<IMqttToken> disconnect() {
-        return Observable.create(new Observable.OnSubscribe<IMqttToken>() {
-            @Override
-            public void call(final Subscriber<? super IMqttToken> subscriber) {
-                if (client != null && client.isConnected()) {
-                    try {
-                        updateState(DISCONNECTING);
-                        client.disconnect("Context", new IMqttActionListener() {
-                            @Override
-                            public void onSuccess(IMqttToken asyncActionToken) {
-                                updateState(State.DISCONNECTED);
-                                subscriber.onNext(asyncActionToken);
-                                subscriber.onCompleted();
-                            }
+    public Observable<RxMqttClient> disconnect() {
+        final PublishSubject<RxMqttClient> subject = PublishSubject.create();
 
-                            @Override
-                            public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                                updateState(State.DISCONNECTED);
-                                subscriber.onError(new RxMqttTokenException(exception, asyncActionToken));
-                            }
-                        });
-                    } catch (MqttException e) {
-                        updateState(State.DISCONNECTED);
-                        subscriber.onError(e);
-                    }
-                } else {
-                    subscriber.onCompleted();
+        try {
+            updateState(DISCONNECTING);
+            client.disconnect("Context", new IMqttActionListener() {
+                @Override
+                public void onSuccess(IMqttToken asyncActionToken) {
+                    updateState(State.DISCONNECTED);
+                    subject.onNext(RxMqttClient.this);
+                    subject.onCompleted();
                 }
-            }
-        });
+
+                @Override
+                public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    exception.printStackTrace();
+                    updateState(State.DISCONNECTED);
+                    subject.onError(exception);
+                }
+            });
+
+        } catch (MqttException ex) {
+            ex.printStackTrace();
+            updateState(DISCONNECTED);
+            subject.onError(ex);
+        }
+
+        return subject;
     }
 
     /**
@@ -292,8 +302,6 @@ public class RxMqttClient {
     }
 
     private Observable<Message> subscribeTopic(final String topic, final QoS qos) {
-        System.out.println(String.format("Subscribing to topic: %s topic", topic));
-
         final Observable<Message> obs = subscribing(topic);
 
         try {

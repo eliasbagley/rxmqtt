@@ -1,4 +1,4 @@
-package com.eliasbagley.rxmqtt.enums;
+package com.eliasbagley.rxmqtt.constants;
 
 public enum State {
     INITIALIZING(0),

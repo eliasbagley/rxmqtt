@@ -18,6 +18,7 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
     buildTypes {
         release {
@@ -25,6 +26,30 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/NOTICE'
+        // Fix a bug with duplicate includes with guava
+        exclude 'META-INF/maven/com.google.guava/guava/pom.properties'
+        exclude 'META-INF/maven/com.google.guava/guava/pom.xml'
+    }
+
+    dexOptions {
+        dexInProcess = true
+        incremental = true
+        preDexLibraries = false
+        javaMaxHeapSize "4G"
+        threadCount 4
+    }
+}
+
+ext {
+    supportLibVersion = '23.0.1'
+    espressoVersion = '2.2.1'
+    androidTestVersion = '0.4.1'
 }
 
 dependencies {
@@ -34,6 +59,22 @@ dependencies {
     compile 'com.google.code.gson:gson:2.5'
     compile 'io.reactivex:rxjava:1.1.0'
     compile 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.0.2'
+
+    // Testing dependencies
+    androidTestCompile "com.android.support.test.espresso:espresso-contrib:${espressoVersion}"
+    androidTestCompile "com.android.support.test.espresso:espresso-core:${espressoVersion}"
+    androidTestCompile "com.google.dexmaker:dexmaker-mockito:1.2"
+    androidTestCompile "com.google.dexmaker:dexmaker:1.2"
+    androidTestCompile "com.android.support.test:rules:${androidTestVersion}"
+    androidTestCompile "com.android.support.test:runner:${androidTestVersion}"
+//    androidTestCompile "com.android.support:support-annotations:${supportLibVersion}"
+    androidTestCompile 'com.google.truth:truth:0.28'
+    androidTestCompile 'junit:junit:4.12'
+    androidTestCompile 'org.mockito:mockito-core:2.0.2-beta'
+
+    testCompile 'com.google.truth:truth:0.28'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.0.2-beta'
 }
 
 ////////////////////////

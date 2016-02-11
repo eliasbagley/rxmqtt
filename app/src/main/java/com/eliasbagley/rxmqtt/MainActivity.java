@@ -5,20 +5,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.widget.Toast;
 
-import com.eliasbagley.rxmqtt.enums.State;
-import com.eliasbagley.rxmqtt.impl.Message;
-import com.eliasbagley.rxmqtt.impl.PublishResponse;
-import com.eliasbagley.rxmqtt.impl.RxMqttClient;
-import com.eliasbagley.rxmqtt.impl.RxMqttClientBuilder;
-import com.eliasbagley.rxmqtt.impl.Status;
-
-import org.eclipse.paho.client.mqttv3.IMqttToken;
-
-import rx.Observable;
 import rx.functions.Action1;
-import rx.functions.Func1;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -86,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
                         System.out.println("Received message: " + message.toString());
                     }
                 });
+
 
         client.publish("my_topic", "hello world from app! der pp").subscribe(new Action1<PublishResponse>() {
             @Override

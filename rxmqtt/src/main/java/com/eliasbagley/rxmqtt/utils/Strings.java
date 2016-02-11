@@ -5,7 +5,7 @@ package com.eliasbagley.rxmqtt.utils;
  */
 public class Strings {
     private Strings() {
-        // No instances.
+        throw new AssertionError("No instances.");
     }
 
     public static boolean isBlank(CharSequence string){

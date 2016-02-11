@@ -1,38 +1,50 @@
-package com.eliasbagley.rxmqtt.impl;
+package com.eliasbagley.rxmqtt;
 
-import com.eliasbagley.rxmqtt.enums.State;
+import android.support.annotation.CheckResult;
+import android.support.annotation.NonNull;
+
+import com.eliasbagley.rxmqtt.constants.State;
 
 import java.sql.Timestamp;
 
-import static com.eliasbagley.rxmqtt.enums.State.*;
+import static com.eliasbagley.rxmqtt.constants.State.*;
+
+/**
+ * Represents the MqttClient's connection status
+ */
 
 public class Status {
-    private Timestamp logTime;
-    private State     state;
+    @NonNull private Timestamp timestamp;
+    @NonNull private State     state;
 
-    public Status(State state) {
+    public Status(@NonNull State state) {
         this(state, new Timestamp(System.currentTimeMillis()));
     }
 
-    public Status(State state, Timestamp logTime) {
+    public Status(@NonNull State state, @NonNull Timestamp logTime) {
         this.state = state;
-        this.logTime = logTime;
+        this.timestamp = logTime;
     }
 
-    public Timestamp getLogTime() {
-        return logTime;
+    @NonNull
+    @CheckResult
+    public Timestamp getTimestamp() {
+        return timestamp;
     }
 
+    @NonNull @CheckResult
     public State getState() {
         return state;
     }
 
     @Override
+    @NonNull @CheckResult
     public String toString() {
-        return String.format("time:%sm state:%s", getLogTime(), getState());
+        return String.format("state: %s, time:%sm", getState(), getTimestamp());
     }
 
     //region convenience methods
+
     public boolean isConnecting() {
         return state == CONNECTING;
     }
@@ -61,5 +73,5 @@ public class Status {
         return state == CONNECTION_LOST;
     }
 
-    //endregion
+    //endregion convenience methods
 }
