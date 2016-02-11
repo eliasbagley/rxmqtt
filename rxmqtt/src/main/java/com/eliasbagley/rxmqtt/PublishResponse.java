@@ -46,7 +46,7 @@ public class PublishResponse {
 
     @Override
     public String toString() {
-        return String.format("topic: %s, message: %s, qos: %d, retained %b", topic, message, qos.getValue(), retained);
+        return String.format("topic: %s, message: %s, qos: %d, retained: %b", topic, message, qos.getValue(), retained);
     }
 
     //endregion

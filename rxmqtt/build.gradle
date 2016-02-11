@@ -44,6 +44,17 @@ android {
         javaMaxHeapSize "4G"
         threadCount 4
     }
+
+    testOptions {
+        unitTests.all {
+        // All the usual Gradle options.
+            testLogging {
+                events "passed", "skipped", "failed", "standardOut", "standardError"
+                outputs.upToDateWhen {false}
+                showStandardStreams = true
+            }
+        }
+    }
 }
 
 ext {
@@ -224,4 +235,17 @@ bintray {
 task('gitTag') {
     "git tag ${version_name}".execute([], project.rootDir)
     "git push --tags".execute([], project.rootDir)
+}
+
+// The default 'assemble' task only applies to normal variants. Add test variants as well.
+android.testVariants.all { variant ->
+    tasks.getByName('assemble').dependsOn variant.assemble
+}
+
+
+// Log the tests in the console rather than having to view the HTML report
+tasks.withType(Test) {
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }

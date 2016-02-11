@@ -40,7 +40,7 @@ public class Status {
     @Override
     @NonNull @CheckResult
     public String toString() {
-        return String.format("state: %s, time:%sm", getState(), getTimestamp());
+        return String.format("%s at %sm", getState(), getTimestamp());
     }
 
     //region convenience methods

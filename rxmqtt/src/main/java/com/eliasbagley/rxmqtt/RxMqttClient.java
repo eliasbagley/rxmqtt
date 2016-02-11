@@ -37,10 +37,9 @@ import static com.eliasbagley.rxmqtt.constants.State.CONNECTION_FAILED;
 import static com.eliasbagley.rxmqtt.constants.State.CONNECTION_LOST;
 import static com.eliasbagley.rxmqtt.constants.State.DISCONNECTED;
 import static com.eliasbagley.rxmqtt.constants.State.DISCONNECTING;
+import static com.eliasbagley.rxmqtt.constants.State.READY;
 import static com.eliasbagley.rxmqtt.constants.State.INITIALIZING;
 
-//TODO wut does the "Context" String do?
-//TODO add an initialized state?
 public class RxMqttClient {
     private MqttConnectOptions connectOptions;
     private Status             status;
@@ -53,24 +52,25 @@ public class RxMqttClient {
 
     @VisibleForTesting
     public RxMqttClient(MqttAsyncClient client, MqttConnectOptions connectOptions, Gson gson) {
+        init(client, connectOptions, gson);
+    }
+
+    public RxMqttClient(String brokerUrl, String clientId, MqttClientPersistence persistence, MqttConnectOptions connectOptions, Gson gson) {
+        try {
+            MqttAsyncClient client = new MqttAsyncClient(brokerUrl, clientId, persistence);
+            init(client, connectOptions, gson);
+        } catch (MqttException ex) {
+            throw new RuntimeException(String.format("Mqtt client init error, %s", ex.getMessage())); // Convert checked to unchecked exception
+        }
+    }
+
+    public void init(MqttAsyncClient client, MqttConnectOptions connectOptions, Gson gson) {
         updateState(INITIALIZING);
         this.client = client;
         this.connectOptions = connectOptions;
         this.gson = gson;
         createListener();
-    }
-
-    public RxMqttClient(String brokerUrl, String clientId, MqttClientPersistence persistence, MqttConnectOptions connectOptions, Gson gson) {
-        this.connectOptions = connectOptions;
-        this.gson = gson;
-
-        try {
-            updateState(INITIALIZING);
-            client = new MqttAsyncClient(brokerUrl, clientId, persistence);
-            createListener();
-        } catch (MqttException ex) {
-            throw new RuntimeException(String.format("Mqtt client init error, %s", ex.getMessage())); // Convert checked to unchecked exception
-        }
+        updateState(READY);
     }
 
     private void createListener() {
@@ -83,8 +83,6 @@ public class RxMqttClient {
 
             @Override
             public void messageArrived(String topic, MqttMessage message) {
-                System.out.println(String.format("Message arrived on topic: %s", topic));
-
                 if (message.getPayload().length != 0) {
                     for (String key : patternHashtable.keySet()) {
                         if (patternHashtable.get(key).matcher(topic).matches()) {
@@ -94,7 +92,6 @@ public class RxMqttClient {
                 }
             }
 
-            //TODO use this to track publishing
             @Override
             public void deliveryComplete(IMqttDeliveryToken token) {
                 System.out.println("delivery complete");
@@ -138,7 +135,6 @@ public class RxMqttClient {
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-                    exception.printStackTrace();
                     updateState(CONNECTION_FAILED);
                     subject.onError(exception);
                 }
@@ -205,6 +201,10 @@ public class RxMqttClient {
         return publish(topic, message, AT_LEAST_ONCE, false);
     }
 
+    public Observable<PublishResponse> publish(final String topic, final String message, final QoS qos) {
+        return publish(topic, message, qos, false);
+    }
+
     /**
      * Publishes only when connected the message on the topic only when connected
      *
@@ -227,6 +227,7 @@ public class RxMqttClient {
                 .flatMap(new Func1<Status, Observable<PublishResponse>>() {
                     @Override
                     public Observable<PublishResponse> call(Status status) {
+                        System.out.println("Returning the publish subject");
                         return publishHelper(topic, message, qos, retained);
                     }
                 });
@@ -244,12 +245,14 @@ public class RxMqttClient {
             client.publish(topic, m, "Context", new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {
+                    System.out.println("on success");
                     subject.onNext(new PublishResponse(topic, message, qos, retained));
-                    subject.onCompleted();
+//                    subject.onCompleted();
                 }
 
                 @Override
                 public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+                    System.out.println("on failure");
                     exception.printStackTrace();
                     subject.onError(exception);
                 }
@@ -339,11 +342,13 @@ public class RxMqttClient {
     }
 
     public void disconnectForcibly() {
+        updateState(DISCONNECTING);
         try {
             client.disconnectForcibly();
         } catch (MqttException e) {
             e.printStackTrace();
         }
+        updateState(DISCONNECTED);
     }
 
     public Observable<IMqttToken> checkPing(final Object userContext) {

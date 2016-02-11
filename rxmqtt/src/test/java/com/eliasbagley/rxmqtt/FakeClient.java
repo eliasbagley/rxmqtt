@@ -1,7 +1,6 @@
 package com.eliasbagley.rxmqtt;
 
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
-import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
@@ -17,21 +16,21 @@ import org.eclipse.paho.client.mqttv3.TimerPingSender;
 
 import java.util.Hashtable;
 import java.util.Map;
-import java.util.UUID;
 
-import rx.functions.Action1;
 import rx.subjects.PublishSubject;
 
 /**
  * Created by eliasbagley on 2/11/16.
  */
 
-//TODO add support for a fake QoS
 public class FakeClient extends MqttAsyncClient {
     private boolean      connected;
     private MqttCallback callback;
 
     private Map<String, PublishSubject<Message>> subscriptions = new Hashtable<>();
+
+    //region flags to force certain callbacks
+    private boolean failConnecting = false;
 
     public FakeClient(String serverURI, String clientId) throws MqttException {
         this(serverURI, clientId, null, new TimerPingSender());
@@ -48,6 +47,14 @@ public class FakeClient extends MqttAsyncClient {
     public FakeClient() throws MqttException {
         this("tcp://localhost:1883", "test-client-id");
     }
+
+    //region setters
+
+    public void setFailConnecting(boolean failConnecting) {
+        this.failConnecting = failConnecting;
+    }
+
+    //endregion
 
 
     //region connect
@@ -70,7 +77,11 @@ public class FakeClient extends MqttAsyncClient {
     public IMqttToken connect(MqttConnectOptions options, Object userContext, IMqttActionListener callback) throws MqttException, MqttSecurityException {
         this.connected = true;
         if (callback != null) {
-            callback.onSuccess(null);
+            if (failConnecting) {
+                callback.onFailure(null, new RuntimeException("Failed connecting"));
+            } else {
+                callback.onSuccess(null);
+            }
         }
         return null;
     }

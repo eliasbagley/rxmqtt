@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.eliasbagley.rxmqtt;
+package com.eliasbagley.rxmqtt.recordingobservers;
 
-import android.util.Log;
-
+import com.eliasbagley.rxmqtt.Message;
 import com.eliasbagley.rxmqtt.constants.QoS;
 
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -29,24 +28,24 @@ import rx.Subscriber;
 import static com.google.common.truth.Truth.assertThat;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-final class RecordingObserver extends Subscriber<Message> {
+public final class MessageRecordingObserver extends Subscriber<Message> {
   private static final Object COMPLETED = "<completed>";
-  private static final String TAG = RecordingObserver.class.getSimpleName();
+  private static final String TAG       = MessageRecordingObserver.class.getSimpleName();
 
   private final BlockingDeque<Object> events = new LinkedBlockingDeque<>();
 
-  @Override public void onCompleted() {
-    Log.d(TAG, "onCompleted");
+  @Override
+  public void onCompleted() {
     events.add(COMPLETED);
   }
 
-  @Override public void onError(Throwable e) {
-    Log.d(TAG, "onError " + e.getClass().getSimpleName() + " " + e.getMessage());
+  @Override
+  public void onError(Throwable e) {
     events.add(e);
   }
 
-  @Override public void onNext(Message message) {
-    Log.d(TAG, "onNext " + message);
+  @Override
+  public void onNext(Message message) {
     events.add(message);
   }
 
@@ -86,7 +85,7 @@ final class RecordingObserver extends Subscriber<Message> {
     }
   }
 
-  static final class MessageAssert {
+  public static final class MessageAssert {
     private final Message message;
 
     MessageAssert(Message message) {
