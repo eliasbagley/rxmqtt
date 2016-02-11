@@ -53,7 +53,7 @@ client.disconnect();
 ```
 
 
-To start using, add the following line to `build.gradle`:
+## Download
 
 ```gradle
 compile 'com.eliasbagley:rxmqtt:0.0.2'
