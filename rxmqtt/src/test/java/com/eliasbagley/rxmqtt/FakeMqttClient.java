@@ -25,7 +25,7 @@ import rx.subjects.PublishSubject;
 
 //TODO model support for wildcard topics
 //TODO model support for the keep alive interval
-public class FakeClient extends MqttAsyncClient {
+public class FakeMqttClient extends MqttAsyncClient {
     private boolean      connected;
     private MqttCallback callback;
 
@@ -34,20 +34,20 @@ public class FakeClient extends MqttAsyncClient {
     //region flags to force certain callbacks
     private boolean failConnecting = false;
 
-    public FakeClient(String serverURI, String clientId) throws MqttException {
+    public FakeMqttClient(String serverURI, String clientId) throws MqttException {
         this(serverURI, clientId, null, new TimerPingSender());
     }
 
-    public FakeClient(String serverURI, String clientId, MqttClientPersistence persistence) throws MqttException {
+    public FakeMqttClient(String serverURI, String clientId, MqttClientPersistence persistence) throws MqttException {
         this(serverURI, clientId, null, new TimerPingSender());
     }
 
-    public FakeClient(String serverURI, String clientId, MqttClientPersistence persistence, MqttPingSender pingSender) throws MqttException {
+    public FakeMqttClient(String serverURI, String clientId, MqttClientPersistence persistence, MqttPingSender pingSender) throws MqttException {
         super(serverURI, clientId, persistence, pingSender);
     }
 
     // Initialize with some defaults
-    public FakeClient() throws MqttException {
+    public FakeMqttClient() throws MqttException {
         this("tcp://localhost:1883", "test-client-id");
     }
 

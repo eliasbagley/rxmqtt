@@ -15,10 +15,10 @@ import org.junit.Test;
 
 import rx.Subscription;
 
-import static com.eliasbagley.rxmqtt.FakeMqttMessage.MESSAGE_1;
-import static com.eliasbagley.rxmqtt.FakeMqttMessage.MESSAGE_2;
-import static com.eliasbagley.rxmqtt.FakeMqttMessage.TOPIC_1;
-import static com.eliasbagley.rxmqtt.FakeMqttMessage.TOPIC_2;
+import static com.eliasbagley.rxmqtt.Messages.MESSAGE_1;
+import static com.eliasbagley.rxmqtt.Messages.MESSAGE_2;
+import static com.eliasbagley.rxmqtt.Messages.TOPIC_1;
+import static com.eliasbagley.rxmqtt.Messages.TOPIC_2;
 import static com.eliasbagley.rxmqtt.constants.QoS.EXACTLY_ONCE;
 import static com.eliasbagley.rxmqtt.constants.State.*;
 
@@ -27,8 +27,8 @@ import static com.eliasbagley.rxmqtt.constants.State.*;
  */
 
 public class RxMqttClientTest {
-    FakeClient   fakeClient;
-    RxMqttClient rxclient;
+    FakeMqttClient fakeMqttClient;
+    RxMqttClient   rxclient;
 
     // Recording observers
     MessageRecordingObserver         mo;
@@ -38,7 +38,7 @@ public class RxMqttClientTest {
     @Before
     public void init() {
         try {
-            fakeClient = new FakeClient();
+            fakeMqttClient = new FakeMqttClient();
         } catch (MqttException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -48,7 +48,7 @@ public class RxMqttClientTest {
         so = new StatusRecordingObserver();
         pro = new PublishResponseRecordingObserver();
 
-        rxclient = new RxMqttClient(fakeClient, new MqttConnectOptions(), new Gson());
+        rxclient = new RxMqttClient(fakeMqttClient, new MqttConnectOptions(), new Gson());
         rxclient.connect();
     }
 
@@ -198,7 +198,7 @@ public class RxMqttClientTest {
 
     @Test
     public void testInitializing() {
-        RxMqttClient c = new RxMqttClient(fakeClient, new MqttConnectOptions(), new Gson());
+        RxMqttClient c = new RxMqttClient(fakeMqttClient, new MqttConnectOptions(), new Gson());
         c.status().subscribe(so);
 
         so.assertStatus().hasState(READY);
@@ -213,8 +213,8 @@ public class RxMqttClientTest {
 
     @Test
     public void testFailedConnecting() {
-        fakeClient.setFailConnecting(true);
-        RxMqttClient c = new RxMqttClient(fakeClient, new MqttConnectOptions(), new Gson());
+        fakeMqttClient.setFailConnecting(true);
+        RxMqttClient c = new RxMqttClient(fakeMqttClient, new MqttConnectOptions(), new Gson());
         c.status().subscribe(so);
 
         so.assertStatus().hasState(READY);
@@ -373,7 +373,6 @@ public class RxMqttClientTest {
                 .hasPayload(new Gson().toJson(testObject))
                 .onTopic(TOPIC_1);
         mo.assertNoMoreEvents();
-
     }
 
     //endregion test publishing
@@ -387,7 +386,7 @@ public class RxMqttClientTest {
 
     private void publish(String topic, MqttMessage message) {
         try {
-            fakeClient.publish(topic, message);
+            fakeMqttClient.publish(topic, message);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
