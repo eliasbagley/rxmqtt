@@ -393,7 +393,7 @@ public class RxMqttClientTest {
     }
 
     public MqttMessage createMessage(String payload, QoS qos) {
-        MqttMessage m = new MqttMessage("payload".getBytes());
+        MqttMessage m = new MqttMessage(payload.getBytes());
         m.setQos(qos.getValue());
         return m;
     }
