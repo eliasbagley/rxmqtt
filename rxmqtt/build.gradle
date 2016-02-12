@@ -219,7 +219,7 @@ bintray {
             desc = libraryDescription
             gpg {
                 sign = false //Determines whether to GPG sign the files. The default is false
-                passphrase = gpgpassphrase
+                passphrase = ''
             }
         }
     }
