@@ -3,7 +3,7 @@ language: android
 android:
   components:
     - tools
-    - build-tools-23.0.0
+    - build-tools-23.0.2
     - extra-android-m2repository
     - android-23
     - sys-img-armeabi-v7a-android-23
@@ -11,12 +11,15 @@ android:
 jdk:
   - oraclejdk8
 
+before_install:
+  - echo yes | android update sdk --all --filter build-tools-23.0.2 --no-ui --force > /dev/null
+
 script:
   - ./gradlew test
   - ./gradlew assemble
 
 after_success:
-  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./gradlew bintrayUpload
+  - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && ./gradlew bintrayUpload && ./gradlew gitTag
 
 cache:
   directories:
