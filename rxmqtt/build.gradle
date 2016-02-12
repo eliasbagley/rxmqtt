@@ -189,25 +189,18 @@ artifacts {
     archives sourcesJar
 }
 
-// Bintray
-Properties properties = new Properties()
-properties.load(project.rootProject.file('credentials/bintray.properties').newDataInputStream())
 
 bintray {
-    // First try to read from local.properties
-    user = properties.getProperty("BINTRAY_USERNAME")
-    key = properties.getProperty("BINTRAY_APIKEY")
-    def gpgpassphrase = properties.getProperty("BINTRAY_GPG_KEY")
+    def credentialsFile = 'credentials/bintray.properties'
+    if (file(credentialsFile).exists()) {
+        Properties properties = new Properties()
+        properties.load(project.rootProject.file(credentialsFile).newDataInputStream())
 
-    // If the properties aren't set in a properties file, load from environment (needed for CI)
-    if (user == null) {
+        user = properties.getProperty("BINTRAY_USERNAME")
+        key = properties.getProperty("BINTRAY_APIKEY")
+    } else {
         user = System.getenv('BINTRAY_USERNAME')
-    }
-    if (key == null) {
         key = System.getenv('BINTRAY_APIKEY')
-    }
-    if (gpgpassphrase == null) {
-        gpgpassphrase = System.getenv('BINTRAY_GPG_PASSPHRASE')
     }
 
     configurations = ['archives']
