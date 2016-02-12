@@ -4,7 +4,7 @@
 
 An [RxJava] wrapper for [MQTT]
 
-Latest version: `0.0.2`
+Latest version: `0.0.3`
 
 ## Usage
 
@@ -58,7 +58,7 @@ client.disconnect();
 ## Download
 
 ```gradle
-compile 'com.eliasbagley:rxmqtt:0.0.2'
+compile 'com.eliasbagley:rxmqtt:0.0.3'
 ```
 
 
